@@ -1,5 +1,16 @@
 const mongoose = require("mongoose");
 
+const addressSchema = mongoose.Schema(
+  {
+    city: String,
+    district: String,
+    street: String,
+    zipCode: Number,
+    latitude: Number,
+    longitude: Number,
+  }
+)
+
 const hobbySchema = mongoose.Schema({
   category: {
     type: String,
@@ -17,18 +28,8 @@ const hobbySchema = mongoose.Schema({
     type: Date,
   },
 
-  adress: { type: mongoose.Schema.Types.ObjectId, ref: "hobbyAdress._id" },
-  address: [
-    {
-      city: String,
-      district: String,
-      street: String,
-      street: String,
-      zipCode: Number,
-      latitude: Number,
-      longitude: Number,
-    },
-  ],
+  address: [addressSchema],
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'users' },
 });
 
 const Hobby = mongoose.model("hobbies", hobbySchema);
