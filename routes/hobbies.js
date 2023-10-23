@@ -6,10 +6,13 @@ const User = require("../models/users");
 
 // Hobbies
 
-app.post("/hobbies", async (req, res) => {
+router.post("/:userId", async (req, res) => {
   try {
-    const { category, name, email, date, adress } = req.body;
+    const { category, name, email, date, address } = req.body;
+    console.log(req.body.address)
     const userId = req.params.userId;
+   
+    // const addressJSON = JSON.stringify(req.body.address);
 
     const user = await User.findById(userId);
     if (!user) {
@@ -18,24 +21,27 @@ app.post("/hobbies", async (req, res) => {
 
     //create a new hobby
     const hobby = new Hobby({
-      category: category,
-      name: name,
-      email: email,
-      date: date,
-      adress: adress,
+      category: req.body.category,
+      name: req.body.name,
+      email: req.body.email,
+      date: req.body.date,
+      address: req.body.address,
       user: userId,
+      
     });
 
     await hobby.save();
 
-    res.status(200).json({ message: "Hobby created successfully!" });
+    res.status(201).json({ message: "Hobby created successfully!" });
   } catch (error) {
     console.log("error creating hobby", error);
     res.status(500).json({ message: "Error creating hobby" });
   }
 });
 
-app.get("/hobbies/:userId", async (req, res) => {
+
+// GET all hobbies from user
+router.get("/:userId/hobbies", async (req, res) => {
   try {
     const userId = req.params.userId;
 
@@ -54,7 +60,7 @@ app.get("/hobbies/:userId", async (req, res) => {
 });
 
 // Delete hobby
-router.delete("/hobbies/:hobbyId", async (req, res) => {
+router.delete("/:hobbyId", async (req, res) => {
   try {
     const hobbyId = req.params.hobbyId;
 

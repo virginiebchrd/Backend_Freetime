@@ -1,7 +1,7 @@
 var express = require("express");
 var router = express.Router();
 const mongoose = require("mongoose");
-
+const bcrypt = require("bcrypt");
 const uid2 = require("uid2");
 const User = require("../models/users");
 
@@ -10,8 +10,17 @@ const User = require("../models/users");
 
 router.post("/register", async (req, res) => {
   try {
-    const { email, password, civility, lastname, firstname, birthday } =
-      req.body;
+    const password = req.body.password;
+    const hash = bcrypt.hashSync(password, 10);
+
+    User.findOne({ email: req.body.email }).then((data) => {
+      if (data && bcrypt.compareSync(req.body.password, data.password)) {
+        res.json({ result: true });
+      } else {
+        res.json({ result: false });
+      }
+    });
+    const { email, civility, lastname, firstname, birthday } = req.body;
 
     // Check if the email is already registered
     const existingUser = await User.findOne({ email });
@@ -23,7 +32,7 @@ router.post("/register", async (req, res) => {
     // Create a new user
     const newUser = new User({
       email,
-      password,
+      password: hash,
       civility,
       lastname,
       firstname,
@@ -43,76 +52,88 @@ router.post("/register", async (req, res) => {
     console.log("New User Registered:", newUser);
     // Send a success response
     res.status(201).json({
-      message:
-        "Registration successful.",
+      message: "Registration successful.",
     });
   } catch (error) {
-    console.log("Error during registration:", error); // Debugging statement
+    console.log("Error during registration:", error);
     res.status(500).json({ message: "Registration failed" });
   }
 });
 
-// //endpoint to verify the email
-// router.get("/verify/:token", async (req, res) => {
-//   try {
-//     const token = req.params.token;
+// add otherUsers
 
-//     //Find the user without the given verification token
-//     const user = await User.findOne({ verificationToken: token });
-//     if (!user) {
-//       return res.status(404).json({ message: "Invalid verification token" });
-//     }
+router.post("/addOtherUser/:userId", async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const user = await User.findById(userId);
 
-//     //Mark the user as verified
-//     user.verified = true;
-//     user.verificationToken = undefined;
+    if (!user) {
+      return res.status(404).json({ message: "Utilisateur non trouvé" });
+    }
 
-//     await user.save();
+    const { name, relationShip } = req.body;
 
-//     res.status(200).json({ message: "Email verified successfully" });
-//   } catch (error) {
-//     res.status(500).json({ message: "Email Verificatiion Failed" });
-//   }
-// });
+    const newOtherUser = { name, relationShip };
 
-// //endpoint to store a new address to the backend
-// router.post("/addresses", async (req, res) => {
-//   try {
-//     const { userId, address } = req.body;
+    user.otherUsers.push(newOtherUser);
 
-//     //find the user by the Userid
-//     const user = await User.findById(userId);
-//     if (!user) {
-//       return res.status(404).json({ message: "User not found" });
-//     }
+    await user.save();
 
-//     //add the new address to the user's addresses array
-//     user.addresses.push(address);
+    res.status(201).json({ message: "OtherUser add successfully" });
+  } catch (error) {
+    console.error("Error to add otherUser :", error);
+    res.status(500).json({ message: "Error to add a new otherUser" });
+  }
+});
 
-//     //save the updated user in te backend
-//     await user.save();
+// check otherUsers
+router.get("/otherUsers/:userId", async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const user = await User.findById(userId);
 
-//     res.status(200).json({ message: "Address created Successfully" });
-//   } catch (error) {
-//     res.status(500).json({ message: "Error addding address" });
-//   }
-// });
-// //get the user profile
-// router.get("/profile/:userId", async (req, res) => {
-//   try {
-//     const userId = req.params.userId;
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-//     const user = await User.findById(userId);
+    const otherUsers = user.otherUsers;
 
-//     if (!user) {
-//       return res.status(404).json({ message: "User not found" });
-//     }
+    res.status(200).json(otherUsers);
+  } catch (error) {
+    console.error("Error with otherUsers :", error);
+    res.status(500).json({ message: "Failed to retrieve otherUsers" });
+  }
+});
 
-//     res.status(200).json({ user });
-//   } catch (error) {
-//     res.status(500).json({ message: "Error retrieving the user profile" });
-//   }
-// });
+// DELETE one otherUser
+router.delete("/deleteOtherUser/:userId/:otherUserId", async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const otherUserId = req.params.otherUserId;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const otherUserIndex = user.otherUsers.findIndex(
+      (ou) => ou._id.toString() === otherUserId
+    );
+
+    if (otherUserIndex === -1) {
+      return res.status(404).json({ message: "OtherUser not found" });
+    }
+
+    user.otherUsers.splice(otherUserIndex, 1);
+
+    await user.save();
+
+    res.status(200).json({ message: "OtherUser delete" });
+  } catch (error) {
+    console.error("Error deleting an otherUser:", error);
+    res.status(500).json({ message: "Failed to delete anotherUser" });
+  }
+});
 
 // route get all users
 router.get("/users", async (req, res) => {
@@ -125,6 +146,5 @@ router.get("/users", async (req, res) => {
     res.status(500).json({ message: "Failed to fetch users" });
   }
 });
-
 
 module.exports = router;
