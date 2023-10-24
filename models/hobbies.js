@@ -12,24 +12,11 @@ const addressSchema = mongoose.Schema(
 )
 
 const hobbySchema = mongoose.Schema({
-  category: {
-    type: String,
-    required: true,
-  },
-  name: {
-    type: String,
-    required: true,
-  },
-  email: {
-    type: String,
-    required: true,
-  },
-  date: {
-    type: Date,
-  },
-
+  category: String,
+  name: String,
+  email: String,
+  date: Date,
   address: [addressSchema],
-  user: { type: mongoose.Schema.Types.ObjectId, ref: 'users' },
 });
 
 const Hobby = mongoose.model("hobbies", hobbySchema);
