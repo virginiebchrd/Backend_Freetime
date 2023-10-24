@@ -1,5 +1,10 @@
 const mongoose = require("mongoose");
 
+const otherUsersSchema = mongoose.Schema({
+  relationShip: String,
+  name: String,
+})
+
 const userSchema = mongoose.Schema({
   civility: String,
   lastname: String,
@@ -8,13 +13,8 @@ const userSchema = mongoose.Schema({
   email: String,
   password: String,
   token: String,
-  hobbies: {type: mongoose.Schema.Types.ObjectId, ref: 'hobbies'},
-  otherUsers: [
-    {
-      name: String,
-      relationShip: String,
-    },
-  ],
+  hobbies: [{type: mongoose.Schema.Types.ObjectId, ref: 'hobbies'}],
+  otherUsers: [ otherUsersSchema ],
 });
 
 const User = mongoose.model('users', userSchema);

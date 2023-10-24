@@ -14,11 +14,13 @@ const addressSchema = mongoose.Schema(
 const hobbySchema = mongoose.Schema({
   category: String,
   name: String,
+  phoneNumber: String,
   email: String,
   date: Date,
-  address: [addressSchema],
+  addresse: addressSchema,
 });
 
 const Hobby = mongoose.model("hobbies", hobbySchema);
 
 module.exports = Hobby;
+
