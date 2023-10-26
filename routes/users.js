@@ -64,12 +64,28 @@ router.post('/identity/:token', (req,res) => {
       User.findOne({token: req.params.token}).then(user => {
       if(user) {
         console.log(user);
-          res.json({result: true, token: user.token});
+          res.json({result: true, identity: user});
       }
       else {
         res.json({result: true, error: 'user not found' });
       }
     })
+  })
+})
+
+//récuperer info du user
+router.get('/identity/:token', (req,res) => {
+  User.findOne({token: req.params.token})
+  .then(data => {
+    if(data) {
+      res.json({result: true, identity: {
+        token: data.token,
+        lastname: data.lastname,
+        firstname: data.firstname,
+      }})
+    } else {
+      res.json({result: false, error: 'User not found'})
+    }
   })
 })
 
@@ -96,7 +112,7 @@ router.post('/relationShip/:token', (req,res) => {
   })
 })
 
-
+//TODO route get pour récupérer les relationship
 
 //Ajouter les activités validées par le user
 router.post('/hobbies/:token', (req,res) => {
