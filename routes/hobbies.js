@@ -65,10 +65,16 @@ router.get('/:category', (req, res) => {
 
 //TODO récupérer toutes les activités pour un user
 router.get('/users/:token', (req,res) => {
-    User.findOne({token: req.params.token}).then( data => {
+    User.findOne({token: req.params.token})
+    .populate('hobbies')
+    .then( data => {
       console.log(data);
-
-
+      if(data) {
+        res.json({result: true, hobbies: data.hobbies})
+      }
+      else {
+        res.json({result: false, error: 'User not found'})
+      }
     })
   });
 
