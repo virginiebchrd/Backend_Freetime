@@ -4,6 +4,102 @@ var router = express.Router();
 const Hobby = require("../models/hobbies");
 const User = require("../models/users");
 
+const { checkBody } = require('../modules/checkBody');
+
+router.post('/new', (req,res) => {
+    if (!checkBody(req.body, ['hobbies'])) {
+        res.json({ result: false, error: 'Missing or empty fields' });
+        return;
+    }
+    /*console.log({name: req.body.hobbies.name, 
+                    "address.city": req.body.hobbies.address.city, 
+                    "address.street": req.body.hobbies.address.street});*/
+
+    Hobby.findOne({name: req.body.hobbies.name},
+                    {address: {city: req.body.hobbies.address.city, 
+                            street: req.body.hobbies.address.street } })
+
+    .then(data => {
+        console.log(data);
+        if(data !== null) {
+            res.json({result: false, error: 'Hobby already existed'} )
+        }
+        else {
+            const address = {
+                city: req.body.hobbies.address.city,
+                district: req.body.hobbies.address.district,
+                street: req.body.hobbies.address.street,
+                zipCode: req.body.hobbies.address.zipCode,
+                latitude: req.body.hobbies.address.latitude,
+                longitude: req.body.hobbies.address.longitude,
+            }
+        
+            const newHobbies = new Hobby ({
+                name: req.body.hobbies.name,
+                category : req.body.hobbies.category,
+                phoneNumber: req.body.hobbies.phoneNumber,
+                email: req.body.hobbies.email,
+                date: req.body.hobbies.date,
+                address: address,
+            });
+        
+            newHobbies.save().then(newHobby => {
+                res.json({result: true, hobbies: newHobby})
+            })
+        }
+    })
+})
+
+router.get('/:category', (req, res) => {
+    Hobby.find({category: req.params.category})
+    .then(data => {
+        console.log(data);
+        if(data.length> 0) {
+            res.json({result: true, hobbies: data});
+        }
+        else {
+            res.json({result: false, error: 'no hobbies in this category'});
+        }
+    })
+});
+
+//TODO récupérer toutes les activités pour un user
+router.get('/users/:token', (req,res) => {
+    User.findOne({token: req.params.token}).then( data => {
+      console.log(data);
+
+
+    })
+  });
+
+//TODO route get pour récupérer les activités dans une zone définie
+
+//TODO afficher les activités choisis par le user
+router.get('/each/:id', (req,res) => {
+  let tabId= req.params.id.split(",");
+  console.log(tabId);
+  Hobby.find({_id : {$in : tabId}})
+  .then(data => {
+    console.log(data);
+    if(data) {
+      res.json({result: true, hobby: data})
+    }
+    else {
+      res.json({result: false, error: 'hobby not found'});
+    }
+
+  })
+})
+
+module.exports = router;
+
+
+/*var express = require("express");
+var router = express.Router();
+
+const Hobby = require("../models/hobbies");
+const User = require("../models/users");
+
 // Hobbies
 
 router.post("/:userId", async (req, res) => {
@@ -77,4 +173,4 @@ router.delete("/:hobbyId", async (req, res) => {
   }
 });
 
-module.exports = router;
+module.exports = router;*/
