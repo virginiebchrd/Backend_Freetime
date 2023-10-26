@@ -98,25 +98,56 @@ router.post('/relationShip/:token', (req,res) => {
 
 
 
-//TODO ajouter les activités validées par le user
+//Ajouter les activités validées par le user
 router.post('/hobbies/:token', (req,res) => {
   if (!checkBody(req.body, ['hobbies'])) {
     res.json({ result: false, error: 'Missing or empty fields' });
     return;
   }
 
-  console.log(req.body.hobbies);
-  const addActivity = req.body.hobbies;
-  User.updateOne({token: req.params.token}, {$push: {hobbies: [...addActivity]}})
-  .then( () => {
+  //console.log('body', req.body.hobbies);
+  const id_activity_saved = req.body.hobbies;
+  Hobby.findById(id_activity_saved).then(findId => {
+    console.log('findId',findId);
     User.findOne({token: req.params.token})
     .populate('hobbies')
-    .then(data => {
-      console.log(data);
-      if(data) {
-        res.json({result: true, hobbiesValidated: data})
+    .then(findUser => {
+      console.log('user find',findUser.hobbies);
+      const found = findUser.hobbies.some(e => e.id === findId.id);
+      console.log(found);
+      if(findUser.hobbies.some(e => e.id === findId.id )) {
+        console.log('deja connu');
+        res.json({result: false, error: 'hobby already saved'})
       }
+      else {
+        console.log('different');
+        User.updateOne({token: req.params.token}, {$push: {hobbies: findId}})
+        .then( (data) => {
+          console.log('updata',data);
+          res.json({result: true })
+        })
+      }
+        /**/
+
     })
+
+    /*User.updateOne({token: req.params.token}, {$push: {hobbies: data}})
+    .then( (data) => {
+      console.log('updata',data);
+
+      User.findOne({token: req.params.token})
+      .populate('hobbies')
+      .then(data => {
+        console.log('update',data);
+        if(data.hobbies.some(e=> e.id === id_activity_saved)) {
+          console.log('deja entré');
+          //res.json({result: true, hobbiesValidated: data})
+        }
+        else {
+          console.log('different ok');
+        }
+      })
+    })*/
   })
 })
 

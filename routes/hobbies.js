@@ -76,7 +76,9 @@ router.get('/users/:token', (req,res) => {
 
 //TODO afficher les activités choisis par le user
 router.get('/each/:id', (req,res) => {
-  Hobby.findById(req.params.id)
+  let tabId= req.params.id.split(",");
+  console.log(tabId);
+  Hobby.find({_id : {$in : tabId}})
   .then(data => {
     console.log(data);
     if(data) {
@@ -85,6 +87,7 @@ router.get('/each/:id', (req,res) => {
     else {
       res.json({result: false, error: 'hobby not found'});
     }
+
   })
 })
 
