@@ -63,14 +63,19 @@ router.get('/:category', (req, res) => {
     })
 });
 
-//TODO récupérer toutes les activités pour un user
+// récupérer toutes les activités pour un user
 router.get('/users/:token', (req,res) => {
     User.findOne({token: req.params.token})
     .populate('hobbies')
     .then( data => {
       console.log(data);
       if(data) {
-        res.json({result: true, hobbies: data.hobbies})
+        if(data.hobbies.length > 0) {
+          res.json({result: true, hobbies: data.hobbies})
+        }
+        else {
+          res.json({result: false, error: 'no hobbies'})
+        }
       }
       else {
         res.json({result: false, error: 'User not found'})
@@ -80,7 +85,7 @@ router.get('/users/:token', (req,res) => {
 
 //TODO route get pour récupérer les activités dans une zone définie
 
-//TODO afficher les activités choisis par le user
+// afficher les activités choisis par le user
 router.get('/each/:id', (req,res) => {
   let tabId= req.params.id.split(",");
   console.log(tabId);
