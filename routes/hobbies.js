@@ -50,8 +50,11 @@ router.post('/new', (req,res) => {
     })
 })
 
-router.get('/:category', (req, res) => {
-    Hobby.find({category: req.params.category})
+router.get('/:category/:city', (req, res) => {
+  console.log(req.params);
+
+    Hobby.find({category: req.params.category}, 
+    {"address.city": req.params.city})
     .then(data => {
         console.log(data);
         if(data.length> 0) {

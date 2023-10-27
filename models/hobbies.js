@@ -17,6 +17,7 @@ const hobbySchema = mongoose.Schema({
   phoneNumber: String,
   email: String,
   date: Date,
+  site: String,
   addresse: addressSchema,
 });
 
