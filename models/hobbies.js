@@ -18,6 +18,7 @@ const hobbySchema = mongoose.Schema({
   email: String,
   date: Date,
   site: String,
+  rating: [Number],
   addresse: addressSchema,
 });
 
