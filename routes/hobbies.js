@@ -50,13 +50,14 @@ router.post('/new', (req,res) => {
     })
 })
 
-router.get('/:category', (req, res) => {
-  //router.get('/:category/:city', (req, res) => {
+/*router.get('/:category', (req, res) => {
+//router.get('/:category/:city', (req, res) => {
   console.log(req.params);
 
-    Hobby.find({category: req.params.category, 
-    /*"address.city": req.params.city*/})
-    .then(data => {
+    Hobby.find({category: req.params.category, */
+    /*"address.city": req.params.city*//*})
+
+      .then(data => {
         console.log(data);
         if(data.length> 0) {
             res.json({result: true, hobbies: data});
@@ -65,7 +66,7 @@ router.get('/:category', (req, res) => {
             res.json({result: false, error: 'no hobbies in this category'});
         }
     })
-});
+});*/
 
 // récupérer toutes les activités pour un user
 router.get('/users/:token', (req,res) => {
@@ -106,86 +107,67 @@ router.get('/each/:id', (req,res) => {
   })
 })
 
+router.post('/rating/:id', (req,res) => {
+  console.log(req.body.myMark);
+  //Hobby.findOne({_id: req.params.id})
+  Hobby.updateOne({_id: req.params.id}, {$push: {rating: req.body.myMark}})
+  .then(() => {
+    Hobby.findOne({_id: req.params.id})
+    .then(data => {
+      console.log(data.rating[data.rating.length-1]);
+      res.json({result: true, yourMark : data.rating[data.rating.length-1]})
+    })
+    
+  })
+})
+
+router.get('/averageMarks/:id', (req,res) => {
+
+  Hobby.findOne({_id: req.params.id})
+  .then( findId => {
+      console.log(findId._id);
+      Hobby.aggregate([ {$unwind: "$rating"}, { $group: {_id : "$_id", avgRating: { $avg: "$rating"}} }])
+      .then(average => {
+      console.log('averag',average);
+      res.json({result: true, average: average})
+    })
+  })
+  
+})
+
+
+/*test avec query -> fonctionnel à changer les noms de la ropute et supprimer get avec 2 params*/
+router.get('/category/query', (req,res) => {
+  const category = req.query.category;
+  const city = req.query.city;
+  const day = req.query.day;
+  console.log(category, city);
+
+  Hobby.find({category: category, 
+    "address.city": city,
+    date: { $elemMatch: { ouverture: day }}
+  })
+
+      .then(data => {
+        console.log(data);
+        if(data.length> 0) {
+            res.json({result: true, hobbies: data});
+        }
+        else {
+            res.json({result: false, error: 'no hobbies in this category'});
+        }
+    })
+})
+
+//permet de recuperer des activités ouvert certains jours -> à ajouter dans les catégories de recherche
+router.get('/test2/query', (req, res) => {
+  const day = req.query.day;
+  console.log('daySend', day);
+
+  Hobby.find({date: { $elemMatch: { ouverture: day }}})
+  .then(data => {
+    console.log(data);
+  })
+})
+
 module.exports = router;
-
-
-/*var express = require("express");
-var router = express.Router();
-
-const Hobby = require("../models/hobbies");
-const User = require("../models/users");
-
-// Hobbies
-
-router.post("/:userId", async (req, res) => {
-  try {
-    const { category, name, email, date, address } = req.body;
-    console.log(req.body.address)
-    const userId = req.params.userId;
-   
-    // const addressJSON = JSON.stringify(req.body.address);
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    //create a new hobby
-    const hobby = new Hobby({
-      category: req.body.category,
-      name: req.body.name,
-      email: req.body.email,
-      date: req.body.date,
-      address: req.body.address,
-      user: userId,
-      
-    });
-
-    await hobby.save();
-
-    res.status(201).json({ message: "Hobby created successfully!" });
-  } catch (error) {
-    console.log("error creating hobby", error);
-    res.status(500).json({ message: "Error creating hobby" });
-  }
-});
-
-
-// GET all hobbies from user
-router.get("/:userId/hobbies", async (req, res) => {
-  try {
-    const userId = req.params.userId;
-
-    const hobbies = await Hobby.find({ user: userId }).populate("user");
-
-    if (!hobbies || hobbies.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "No hobbies found for this user" });
-    }
-
-    res.status(200).json({ hobbies });
-  } catch (error) {
-    res.status(500).json({ message: "Error" });
-  }
-});
-
-// Delete hobby
-router.delete("/:hobbyId", async (req, res) => {
-  try {
-    const hobbyId = req.params.hobbyId;
-
-    const deletedHobby = await Hobby.findByIdAndRemove(hobbyId);
-
-    if (!deletedHobby) {
-      return res.status(404).json({ message: "Hobby not found" });
-    }
-
-    res.status(200).json({ message: "Hobby deleted successfully" });
-  } catch (error) {
-    console.error("Error", error);
-    res.status(500).json({ message: "Error" });
-  }
-});
-
-module.exports = router;*/
