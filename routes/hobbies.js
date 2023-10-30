@@ -141,7 +141,7 @@ router.get('/category/query', (req,res) => {
   const category = req.query.category;
   const city = req.query.city;
   const day = req.query.day;
-  console.log(category, city);
+  console.log(category, city, day);
 
   Hobby.find({category: category, 
     "address.city": city,
