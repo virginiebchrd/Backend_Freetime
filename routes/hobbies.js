@@ -50,13 +50,14 @@ router.post('/new', (req,res) => {
     })
 })
 
-//router.get('/:category', (req, res) => {
-router.get('/:category/:city', (req, res) => {
+/*router.get('/:category', (req, res) => {
+//router.get('/:category/:city', (req, res) => {
   console.log(req.params);
 
-    Hobby.find({category: req.params.category, 
-    "address.city": req.params.city})
-    .then(data => {
+    Hobby.find({category: req.params.category, */
+    /*"address.city": req.params.city*//*})
+
+      .then(data => {
         console.log(data);
         if(data.length> 0) {
             res.json({result: true, hobbies: data});
@@ -65,7 +66,7 @@ router.get('/:category/:city', (req, res) => {
             res.json({result: false, error: 'no hobbies in this category'});
         }
     })
-});
+});*/
 
 // récupérer toutes les activités pour un user
 router.get('/users/:token', (req,res) => {
@@ -110,18 +111,63 @@ router.post('/rating/:id', (req,res) => {
   console.log(req.body.myMark);
   //Hobby.findOne({_id: req.params.id})
   Hobby.updateOne({_id: req.params.id}, {$push: {rating: req.body.myMark}})
-  .then(data => {
-    console.log(data);
-    res.json({result: true})
+  .then(() => {
+    Hobby.findOne({_id: req.params.id})
+    .then(data => {
+      console.log(data.rating[data.rating.length-1]);
+      res.json({result: true, yourMark : data.rating[data.rating.length-1]})
+    })
+    
   })
 })
 
-/*router.get('/averageMarks/:id', (req,res) => {
-  console.log('ici');
+router.get('/averageMarks/:id', (req,res) => {
 
-  let test = Hobby.aggregate([ { $group: {_id : "$name", avgRating: { $avg: "$rating"}} }])
-  console.log(test);
+  Hobby.findOne({_id: req.params.id})
+  .then( findId => {
+      console.log(findId._id);
+      Hobby.aggregate([ {$unwind: "$rating"}, { $group: {_id : "$_id", avgRating: { $avg: "$rating"}} }])
+      .then(average => {
+      console.log('averag',average);
+      res.json({result: true, average: average})
+    })
+  })
   
-})*/
+})
+
+
+/*test avec query -> fonctionnel à changer les noms de la ropute et supprimer get avec 2 params*/
+router.get('/category/query', (req,res) => {
+  const category = req.query.category;
+  const city = req.query.city;
+  const day = req.query.day;
+  console.log(category, city);
+
+  Hobby.find({category: category, 
+    "address.city": city,
+    date: { $elemMatch: { ouverture: day }}
+  })
+
+      .then(data => {
+        console.log(data);
+        if(data.length> 0) {
+            res.json({result: true, hobbies: data});
+        }
+        else {
+            res.json({result: false, error: 'no hobbies in this category'});
+        }
+    })
+})
+
+//permet de recuperer des activités ouvert certains jours -> à ajouter dans les catégories de recherche
+router.get('/test2/query', (req, res) => {
+  const day = req.query.day;
+  console.log('daySend', day);
+
+  Hobby.find({date: { $elemMatch: { ouverture: day }}})
+  .then(data => {
+    console.log(data);
+  })
+})
 
 module.exports = router;
