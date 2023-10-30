@@ -108,28 +108,61 @@ router.get('/each/:id', (req,res) => {
 })
 
 router.post('/rating/:id', (req,res) => {
-  console.log(req.body.myMark);
-  //Hobby.findOne({_id: req.params.id})
-  Hobby.updateOne({_id: req.params.id}, {$push: {rating: req.body.myMark}})
-  .then(() => {
-    Hobby.findOne({_id: req.params.id})
+  console.log(req.body);
+
+  Hobby.findById(req.params.id)
     .then(data => {
-      console.log(data.rating[data.rating.length-1]);
-      res.json({result: true, yourMark : data.rating[data.rating.length-1]})
+      if(data) {
+        console.log("find",data.rating);
+        if(!data.rating.some(e => e.token === req.body.token)) {
+          //Hobby.findByIdAndUpdate(req.params.id, {$push: {rating: {token: req.body.token, myMark: req.body.myMark}}})
+          Hobby.findOneAndUpdate({_id: req.params.id}, {$push: {rating: {token: req.body.token, myMark: req.body.myMark}}})
+          .then(() => {
+            Hobby.findById(req.params.id)
+            .then(data3 => {
+              const myMark = data3.rating.find(e => e.token = req.body.token)
+              console.log('myMark', myMark);
+              res.json({result: true, personalMark: myMark.myMark});
+              //console.log("data3",data3);
+            })
+              
+          })
+          
+        }
+        else {
+          res.json({result: false, error: 'marks already exists'});
+        }
+      }
+      else {
+        res.json({result: false, error: 'hobbies don\'t exist'})
+      }
     })
-    
-  })
 })
 
-router.get('/averageMarks/:id', (req,res) => {
+router.get('/averageMarks/query', (req,res) => {
+  const id_hobbies = req.query.id
+  const token = req.query.token;
 
-  Hobby.findOne({_id: req.params.id})
+  Hobby.findById(id_hobbies)
   .then( findId => {
       console.log(findId._id);
-      Hobby.aggregate([ {$unwind: "$rating"}, { $group: {_id : "$_id", avgRating: { $avg: "$rating"}} }])
+      Hobby.aggregate([ {$unwind: "$rating"}, { $group: {_id : "$_id", avgRating: { $avg: "$rating.myMark"}} }])
       .then(average => {
-      console.log('averag',average);
-      res.json({result: true, average: average})
+        console.log('averag', average);
+        if(average.some(e =>  new RegExp(id_hobbies).test(e._id))) {
+          const averageHobbies = average.find(e =>  new RegExp(id_hobbies).test(e._id));
+          if(findId.rating.some(e => e.token === token)) {
+            const myMark = findId.rating.find(e => e.token === token)
+            console.log("myMark",myMark);
+            res.json({result: true, average: averageHobbies.avgRating, myMark: myMark.myMark})
+          }
+          else {
+            res.json({result: false, error: 'no marks for this activities'})
+          }
+        }
+        else {
+          res.json({result: false, error: 'no average for this activities'})
+        }
     })
   })
   

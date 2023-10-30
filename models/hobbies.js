@@ -11,6 +11,11 @@ const addressSchema = mongoose.Schema(
   }
 )
 
+const marksSchema = mongoose.Schema({
+  token: String,
+  myMark: Number,
+})
+
 const hobbySchema = mongoose.Schema({
   category: String,
   name: String,
@@ -18,7 +23,7 @@ const hobbySchema = mongoose.Schema({
   email: String,
   date: Date,
   site: String,
-  rating: [Number],
+  rating: [marksSchema],
   addresse: addressSchema,
 });
 
