@@ -113,8 +113,6 @@ router.post('/relationShip/:token', (req,res) => {
   })
 })
 
-//TODO route get pour récupérer les relationship
-
 //Ajouter les activités validées par le user
 router.post('/hobbies/:token', (req,res) => {
   if (!checkBody(req.body, ['hobbies'])) {
@@ -147,24 +145,6 @@ router.post('/hobbies/:token', (req,res) => {
         /**/
 
     })
-
-    /*User.updateOne({token: req.params.token}, {$push: {hobbies: data}})
-    .then( (data) => {
-      console.log('updata',data);
-
-      User.findOne({token: req.params.token})
-      .populate('hobbies')
-      .then(data => {
-        console.log('update',data);
-        if(data.hobbies.some(e=> e.id === id_activity_saved)) {
-          console.log('deja entré');
-          //res.json({result: true, hobbiesValidated: data})
-        }
-        else {
-          console.log('different ok');
-        }
-      })
-    })*/
   })
 })
 
@@ -177,4 +157,19 @@ router.get('/hobbiesValidate/:token', (req,res) => {
   })
 });
 
+//Retirer une activité validée
+router.put('/delete/query', (req,res) => {
+  const idAct= req.query.id;
+  const token= req.query.token;
+
+  User.updateOne({token: token}, {$pull :{hobbies:  idAct}})
+  .then(() => {
+    User.findOne({token: token})
+    .populate('hobbies')
+    .then(data => {
+      console.log(data);
+      res.json({result: true, hobbies: data})
+    })
+  })
+})
 module.exports = router;
