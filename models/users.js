@@ -5,6 +5,12 @@ const otherUsersSchema = mongoose.Schema({
   name: String,
 })
 
+const hobbiesSchema = mongoose.Schema({
+  perso: [{type: mongoose.Schema.Types.ObjectId, ref: 'hobbies'}],
+  famille: [{type: mongoose.Schema.Types.ObjectId, ref: 'hobbies'}],
+  amis: [{type: mongoose.Schema.Types.ObjectId, ref: 'hobbies'}]
+  })
+
 const userSchema = mongoose.Schema({
   civility: String,
   lastname: String,
@@ -13,7 +19,7 @@ const userSchema = mongoose.Schema({
   email: String,
   password: String,
   token: String,
-  hobbies: [{type: mongoose.Schema.Types.ObjectId, ref: 'hobbies'}],
+  hobbies: hobbiesSchema,
   otherUsers: [ otherUsersSchema ],
 });
 

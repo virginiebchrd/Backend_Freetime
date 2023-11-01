@@ -60,7 +60,13 @@ router.post('/identity/:token', (req,res) => {
     return;
   }
 
-  User.updateOne({token: req.params.token}, {$set :{civility: req.body.civility, lastname:req.body.lastname, firstname: req.body.firstname, birthday: req.body.birthday}})
+  User.updateOne({token: req.params.token}, {$set :{civility: req.body.civility, lastname:req.body.lastname, firstname: req.body.firstname, birthday: req.body.birthday,
+                                                    hobbies: {
+                                                      perso : [],
+                                                      famille: [],
+                                                      amis: [],
+                                                    }
+  }})
   .then(() => {
       User.findOne({token: req.params.token}).then(user => {
       if(user) {
@@ -99,7 +105,7 @@ router.post('/relationShip/:token', (req,res) => {
     return;
   }
 
-  User.updateOne({token: req.params.token}, {$set: {otherUsers: {relationShip: req.body.relationShip, name: req.body.name}}})
+  User.updateOne({token: req.params.token}, {$set: {otherUsers: {relationShip: req.body.relationShip, name: req.body.name} }})
   .then( () => {
     User.findOne({token: req.params.token}).then( user => {
       if(user) {
@@ -114,46 +120,93 @@ router.post('/relationShip/:token', (req,res) => {
 })
 
 //Ajouter les activités validées par le user
-router.post('/hobbies/:token', (req,res) => {
+router.post('/hobbies/query/', (req,res) => {
   if (!checkBody(req.body, ['hobbies'])) {
     res.json({ result: false, error: 'Missing or empty fields' });
     return;
   }
 
-  //console.log('body', req.body.hobbies);
+  const token = req.query.token;
+  const who = req.query.who;
+
+  console.log('token + who',token , who);
   const id_activity_saved = req.body.hobbies;
+  console.log(id_activity_saved);
   Hobby.findById(id_activity_saved).then(findId => {
     console.log('findId',findId);
-    User.findOne({token: req.params.token})
-    .populate('hobbies')
+    User.findOne({token})
     .then(findUser => {
-      console.log('user find',findUser.hobbies);
-      const found = findUser.hobbies.some(e => e.id === findId.id);
-      console.log(found);
-      if(findUser.hobbies.some(e => e.id === findId.id )) {
-        console.log('deja connu');
-        res.json({result: false, error: 'hobby already saved'})
+      
+      if(who==='perso') {
+        if(!findUser.hobbies.perso.some(e => new RegExp(findId._id).test(e._id)))
+        {
+          User.updateOne({token}, {$push: {"hobbies.perso": findId}})
+          .then(() => {
+            User.findOne({token})
+            .populate('hobbies.amis')
+            .populate('hobbies.famille')
+            .populate('hobbies.perso')
+            .then(data => {
+              res.json({result: true, hobbies: data.hobbies, token: data.token})
+            })
+          })
+        }
+        else {
+          res.json({result: false, error: 'hobbies already added'})
+        }
       }
-      else {
-        console.log('different');
-        User.updateOne({token: req.params.token}, {$push: {hobbies: findId}})
-        .then( (data) => {
-          console.log('updata',data);
-          res.json({result: true })
-        })
+      else if(who==='famille') {
+        if(!findUser.hobbies.famille.some(e => new RegExp(findId._id).test(e._id)))
+        {
+          User.updateOne({token}, {$push: {"hobbies.famille": findId}})
+          .then(() => {
+            User.findOne({token})
+            .populate('hobbies.amis')
+            .populate('hobbies.famille')
+            .populate('hobbies.perso')
+            .then(data => {
+              res.json({result: true, hobbies: data.hobbies, token: data.token})
+            })
+          })
+        }
+        else {
+          res.json({result: false, error: 'hobbies already added'})
+        }
       }
-        /**/
-
+      else if(who==='amis') {
+        if(!findUser.hobbies.amis.some(e => new RegExp(findId._id).test(e._id)))
+        {
+          User.updateOne({token}, {$push: {"hobbies.amis": findId}})
+          .then(() => {
+            User.findOne({token})
+            .populate('hobbies.perso')
+            .populate('hobbies.famille')
+            .populate('hobbies.amis')
+            .then(data => {
+              res.json({result: true, hobbies: data.hobbies, token: data.token})
+            })
+          })
+        }
+        else {
+          res.json({result: false, error: 'hobbies already added'})
+        }
+      }
     })
   })
 })
 
 router.get('/hobbiesValidate/:token', (req,res) => {
   User.findOne({token: req.params.token})
-  .populate('hobbies')
+  .populate('hobbies.perso')
+  .populate('hobbies.famille')
+  .populate('hobbies.amis')
   .then(data => {
-    console.log(data);
-    res.json({result: true, hobbiesValidated: data});
+    console.log(data.hobbies);
+    res.json({result: true, 
+      hobbiesValidatedPerso: data.hobbies.perso,
+      hobbiesValidatedFamille: data.hobbies.famille,
+      hobbiesValidatedAmis: data.hobbies.amis,
+    });
   })
 });
 
@@ -161,15 +214,41 @@ router.get('/hobbiesValidate/:token', (req,res) => {
 router.put('/delete/query', (req,res) => {
   const idAct= req.query.id;
   const token= req.query.token;
+  const who = req.query.who;
 
-  User.updateOne({token: token}, {$pull :{hobbies:  idAct}})
-  .then(() => {
-    User.findOne({token: token})
-    .populate('hobbies')
-    .then(data => {
-      console.log(data);
-      res.json({result: true, hobbies: data})
+  if(who === 'famille') {
+    User.updateOne({token: token}, {$pull :{"hobbies.famille":  idAct}})
+    .then(() => {
+      User.findOne({token: token})
+      .populate('hobbies')
+      .then(data => {
+        console.log(data);
+        res.json({result: true, hobbies: data})
+      })
     })
-  })
-})
+  }
+  else if(who === 'amis') {
+    User.updateOne({token: token}, {$pull :{"hobbies.amis":  idAct}})
+    .then(() => {
+      User.findOne({token: token})
+      .populate('hobbies')
+      .then(data => {
+        console.log(data);
+        res.json({result: true, hobbies: data})
+      })
+    })
+  }
+  else if(who === 'perso') {
+    User.updateOne({token: token}, {$pull :{"hobbies.perso":  idAct}})
+    .then(() => {
+      User.findOne({token: token})
+      .populate('hobbies')
+      .then(data => {
+        console.log(data);
+        res.json({result: true, hobbies: data})
+      })
+    })
+  }
+});
+
 module.exports = router;
