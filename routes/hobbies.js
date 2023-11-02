@@ -139,7 +139,7 @@ router.get('/averageMarks/query', (req,res) => {
             res.json({result: true, average: averageHobbies.avgRating, myMark: myMark.myMark})
           }
           else {
-            res.json({result: false, error: 'no marks for this activities'})
+            res.json({result: true, average: averageHobbies.avgRating, error: 'no marks for this activities'})
           }
         }
         else {
