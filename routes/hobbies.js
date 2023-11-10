@@ -50,24 +50,6 @@ router.post('/new', (req,res) => {
     })
 })
 
-/*router.get('/:category', (req, res) => {
-//router.get('/:category/:city', (req, res) => {
-  console.log(req.params);
-
-    Hobby.find({category: req.params.category, */
-    /*"address.city": req.params.city*//*})
-
-      .then(data => {
-        console.log(data);
-        if(data.length> 0) {
-            res.json({result: true, hobbies: data});
-        }
-        else {
-            res.json({result: false, error: 'no hobbies in this category'});
-        }
-    })
-});*/
-
 // récupérer toutes les activités pour un user
 router.get('/users/:token', (req,res) => {
     User.findOne({token: req.params.token})
@@ -157,7 +139,7 @@ router.get('/averageMarks/query', (req,res) => {
             res.json({result: true, average: averageHobbies.avgRating, myMark: myMark.myMark})
           }
           else {
-            res.json({result: false, error: 'no marks for this activities'})
+            res.json({result: true, average: averageHobbies.avgRating, error: 'no marks for this activities'})
           }
         }
         else {
@@ -169,7 +151,7 @@ router.get('/averageMarks/query', (req,res) => {
 })
 
 
-/*test avec query -> fonctionnel à changer les noms de la ropute et supprimer get avec 2 params*/
+/*test avec query -> fonctionnel à changer les noms de la route et supprimer get avec 2 params*/
 router.get('/category/query', (req,res) => {
   const category = req.query.category;
   const city = req.query.city;
